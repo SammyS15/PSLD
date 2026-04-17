@@ -1,0 +1,5 @@
+Job started: Sun Apr 12 17:34:41 EDT 2026
+Running on node: rg31608
+GPU(s): 0
+Loading model from models/ldm/stable-diffusion-v1/model.ckpt
+Global Step: 470000

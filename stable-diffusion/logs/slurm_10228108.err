@@ -1,0 +1,40 @@
+The following modules were not unloaded:
+  (Use "module --force purge" to unload all):
+
+  1) CCconfig        6)  ucx/1.14.1         11) flexiblas/3.3.1
+  2) gentoo/2023     7)  libfabric/1.18.0   12) aocl-blas/5.1
+  3) gcccore/.12.3   8)  pmix/4.2.4         13) aocl-lapack/5.1
+  4) gcc/12.3        9)  ucc/1.2.0          14) StdEnv/2023
+  5) hwloc/2.9.1     10) openmpi/4.1.5
+/lustre10/scratch/sammys15/PSLD/psld_env/lib/python3.11/site-packages/lightning_fabric/__init__.py:29: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  __import__("pkg_resources").declare_namespace(__name__)
+[rank: 0] Global seed set to 42
+Traceback (most recent call last):
+  File "/lustre10/scratch/sammys15/PSLD/stable-diffusion/scripts/inverse.py", line 559, in <module>
+    main()
+  File "/lustre10/scratch/sammys15/PSLD/stable-diffusion/scripts/inverse.py", line 322, in main
+    model = load_model_from_config(config, f"{opt.ckpt}")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lustre10/scratch/sammys15/PSLD/stable-diffusion/scripts/inverse.py", line 57, in load_model_from_config
+    model = instantiate_from_config(config.model)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sammys15/links/scratch/PSLD/stable-diffusion/ldm/util.py", line 85, in instantiate_from_config
+    return get_obj_from_str(config["target"])(**config.get("params", dict()))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sammys15/links/scratch/PSLD/stable-diffusion/ldm/util.py", line 93, in get_obj_from_str
+    return getattr(importlib.import_module(module, package=None), cls)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/cvmfs/soft.computecanada.ca/easybuild/software/2023/x86-64-v4/Compiler/gcccore/python/3.11.5/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "/home/sammys15/links/scratch/PSLD/stable-diffusion/ldm/models/diffusion/ddpm.py", line 24, in <module>
+    from ldm.models.autoencoder import VQModelInterface, IdentityFirstStage, AutoencoderKL
+  File "/home/sammys15/links/scratch/PSLD/stable-diffusion/ldm/models/autoencoder.py", line 6, in <module>
+    from taming.modules.vqvae.quantize import VectorQuantizer2 as VectorQuantizer
+ImportError: cannot import name 'VectorQuantizer2' from 'taming.modules.vqvae.quantize' (/lustre10/scratch/sammys15/PSLD/psld_env/lib/python3.11/site-packages/taming/modules/vqvae/quantize.py)

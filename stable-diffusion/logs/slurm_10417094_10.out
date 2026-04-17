@@ -1,0 +1,11 @@
+Job started:  Wed Apr 15 11:16:36 EDT 2026
+Node:         rg31901
+Array task:   10  (seed=1  scale=1.0  eta=0.3)
+Loading model from models/ldm/stable-diffusion-v1/model.ckpt
+Global Step: 470000
+LatentDiffusion: Running in eps-prediction mode
+DiffusionWrapper has 859.52 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels
+Creating invisible watermark encoder (see https://github.com/ShieldMnt/invisible-watermark)...

@@ -1,0 +1,14 @@
+Job started:  Wed Apr 15 19:22:41 EDT 2026
+Node:         rg32002
+Array task:   8  (seed=1  scale=1.0  eta=0.0)
+Loading model from models/ldm/stable-diffusion-v1/model.ckpt
+Global Step: 470000
+LatentDiffusion: Running in eps-prediction mode
+DiffusionWrapper has 859.52 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels
+Creating invisible watermark encoder (see https://github.com/ShieldMnt/invisible-watermark)...
+Subtracting 1 from DDIM time indices to match the dimension.
+Data shape for DDIM sampling is (1, 4, 64, 64), eta 0.0
+Running DDIM Sampling with 1000 timesteps

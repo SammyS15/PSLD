@@ -1,4 +1,5 @@
 import argparse, os, sys, glob
+from datetime import datetime
 import cv2
 import torch
 import numpy as np
@@ -20,14 +21,14 @@ from ldm.models.diffusion.plms import PLMSSampler
 from ldm.models.diffusion.dpm_solver import DPMSolverSampler
 
 # from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
-from transformers import AutoFeatureExtractor
+# from transformers import AutoFeatureExtractor
 
 import pdb
 
 
-# load safety model
-safety_model_id = "CompVis/stable-diffusion-safety-checker"
-safety_feature_extractor = AutoFeatureExtractor.from_pretrained(safety_model_id)
+# load safety model (disabled — safety checker is not used)
+# safety_model_id = "CompVis/stable-diffusion-safety-checker"
+# safety_feature_extractor = AutoFeatureExtractor.from_pretrained(safety_model_id)
 # safety_checker = StableDiffusionSafetyChecker.from_pretrained(safety_model_id)
 
 
@@ -50,7 +51,7 @@ def numpy_to_pil(images):
 
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")
-    pl_sd = torch.load(ckpt, map_location="cpu")
+    pl_sd = torch.load(ckpt, map_location="cpu", weights_only=False)
     if "global_step" in pl_sd:
         print(f"Global Step: {pl_sd['global_step']}")
     sd = pl_sd["state_dict"]
@@ -218,7 +219,7 @@ def main():
     parser.add_argument(
         "--ckpt",
         type=str,
-        default="models/ldm/stable-diffusion-v1/model.ckpt",
+        default="/home/sammys15/links/scratch/Latent_Posterior_Sampling_Method_Comparsion/stable_diffusion_1_5_model/v1-5-pruned-emaonly.ckpt",
         help="path to checkpoint of model",
     )
     parser.add_argument(
@@ -295,6 +296,18 @@ def main():
         help='downsample result to 256',
     )
     parser.add_argument(
+        "--file_path",
+        type=str,
+        default=None,
+        help="absolute path to input image; overrides --file_id and the data root from task config",
+    )
+    parser.add_argument(
+        "--n_posterior_samples",
+        type=int,
+        default=100,
+        help="number of iid posterior samples to draw (inpainting mode)",
+    )
+    parser.add_argument(
         "--ffhq256",
         action='store_true',
         help='load SD weights trained on FFHQ',
@@ -312,8 +325,8 @@ def main():
     ## 
     if opt.ffhq256:
         print("Using FFHQ 256 finetuned model...")
-        opt.config = "models/ldm/ffhq256/config.yaml"
-        opt.ckpt = "models/ldm/ffhq256/model.ckpt"
+        opt.config = "configs/stable-diffusion/v1-inference.yaml"
+        opt.ckpt = "/home/sammys15/links/scratch/Latent_Posterior_Sampling_Method_Comparsion/stable_diffusion_1_5_model/v1-5-pruned-emaonly.ckpt"
     ##
     
     seed_everything(opt.seed)
@@ -355,6 +368,8 @@ def main():
 
     sample_path = os.path.join(outpath, "samples")
     os.makedirs(sample_path, exist_ok=True)
+    run_dir = os.path.join(sample_path, datetime.now().strftime("%Y%m%d_%H%M%S") + f"_g{opt.gamma:g}_w{opt.omega:g}_eta{opt.ddim_eta:g}_sc{opt.scale:g}_seed{opt.seed}")
+    os.makedirs(run_dir, exist_ok=True)
     base_count = len(os.listdir(sample_path))
     grid_count = len(os.listdir(outpath)) - 1
 
@@ -389,7 +404,8 @@ def main():
     task_config = load_yaml(task_config)
 
     task_config['data']['root'] = opt.dps_path + 'data/samples/'
-    img = plt.imread(task_config['data']['root']+opt.file_id)
+    img_path = opt.file_path if opt.file_path is not None else task_config['data']['root'] + opt.file_id
+    img = plt.imread(img_path)
     # img = next(iter(loader))
 
     img = img - img.min()
@@ -443,111 +459,172 @@ def main():
     with precision_scope("cuda"):
         with model.ema_scope():
             tic = time.time()
-            all_samples = list()
-            for n in trange(opt.n_iter, desc="Sampling"):
-                for prompts in tqdm(data, desc="data"):
-                    uc = None
-                    if opt.ffhq256:
-                        shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
-                        samples_ddim, _ = sampler.sample(S=opt.ddim_steps,
-                                                        batch_size=opt.n_samples,
-                                                        shape=shape,
-                                                        verbose=False,
-                                                        eta=opt.ddim_eta,
-                                                        x_T=start_code,
-                                                        ip_mask = mask,
-                                                        measurements = y_n,
-                                                        operator = operator,
-                                                        gamma = opt.gamma,
-                                                        inpainting = opt.inpainting,
-                                                        omega = opt.omega,
-                                                        general_inverse=opt.general_inverse,
-                                                        noiser=noiser,
-                                                        ffhq256=opt.ffhq256)
-                    else:
-                        # pdb.set_trace()
-                        if opt.scale != 1.0 :
-                            uc = model.get_learned_conditioning(batch_size * [""])
-                        if isinstance(prompts, tuple):
-                            prompts = list(prompts)
-                        c = model.get_learned_conditioning(prompts)
-                        shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
-                        samples_ddim, _ = sampler.sample(S=opt.ddim_steps,
-                                                        conditioning=c,
-                                                        batch_size=opt.n_samples,
-                                                        shape=shape,
-                                                        verbose=False,
-                                                        unconditional_guidance_scale=opt.scale,
-                                                        unconditional_conditioning=uc,
-                                                        eta=opt.ddim_eta,
-                                                        x_T=start_code,
-                                                        ip_mask = mask,
-                                                        measurements = y_n,
-                                                        operator = operator,
-                                                        gamma = opt.gamma,
-                                                        inpainting = opt.inpainting,
-                                                        omega = opt.omega,
-                                                        general_inverse=opt.general_inverse,
-                                                        noiser=noiser)
 
+            if opt.inpainting:
+                # ----------------------------------------------------------
+                # Inpainting: draw n_posterior_samples iid samples, then
+                # compute posterior statistics and save all diagnostics.
+                # ----------------------------------------------------------
+                uc = model.get_learned_conditioning(batch_size * [""]) if opt.scale != 1.0 else None
+                c  = model.get_learned_conditioning(batch_size * [opt.prompt])
+                shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
 
-                    x_samples_ddim = model.decode_first_stage(samples_ddim)
-                    x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
-                    x_samples_ddim = x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy()
+                gt_01  = torch.clamp((org_image[0] + 1.0) / 2.0, 0.0, 1.0).cpu()  # [C,H,W]
+                y_01   = torch.clamp((y_n[0].cpu()  + 1.0) / 2.0, 0.0, 1.0)       # [C,H,W]
+                mask_hw = mask.cpu()[0]                                             # [1,H,W]
 
-                    # x_checked_image, has_nsfw_concept = check_safety(x_samples_ddim)
-                    # x_checked_image_torch = torch.from_numpy(x_checked_image).permute(0, 3, 1, 2)
-                    
-                    x_checked_image_torch = torch.from_numpy(x_samples_ddim).permute(0, 3, 1, 2)
-                    
-                    
-                    if not opt.skip_save:
-                        for x_sample in x_checked_image_torch:
-                            if opt.inpainting:  # Inpainting gluing logic as in SD inpaint.py
-                                image = torch.clamp((org_image+1.0)/2.0, min=0.0, max=1.0)
-                                image = image.cpu().numpy()
+                posterior_samples = []
+                for _ in trange(opt.n_posterior_samples, desc="Posterior samples"):
+                    s_ddim, _ = sampler.sample(
+                        S=opt.ddim_steps,
+                        conditioning=c,
+                        batch_size=batch_size,
+                        shape=shape,
+                        verbose=False,
+                        unconditional_guidance_scale=opt.scale,
+                        unconditional_conditioning=uc,
+                        eta=opt.ddim_eta,
+                        x_T=None,   # fresh random start for each iid draw
+                        ip_mask=mask,
+                        measurements=y_n,
+                        operator=operator,
+                        gamma=opt.gamma,
+                        inpainting=opt.inpainting,
+                        omega=opt.omega,
+                        general_inverse=opt.general_inverse,
+                        noiser=noiser,
+                    )
+                    x0 = model.decode_first_stage(s_ddim)
+                    x0 = torch.clamp((x0 + 1.0) / 2.0, 0.0, 1.0)
+                    posterior_samples.append(x0[0].detach().cpu())  # [C,H,W]
 
-                                mask = mask.cpu().numpy()
-                                
-                                inpainted = mask*image+(1-mask)*x_sample.cpu().numpy()
-                                inpainted = inpainted.transpose(0,2,3,1)[0]*255
-                                Image.fromarray(inpainted.astype(np.uint8)).save(os.path.join(sample_path, f"{base_count:05}.png"))
-                            else:
-                                x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
-                                img = Image.fromarray(x_sample.astype(np.uint8))
-                                # img = put_watermark(img, wm_encoder)
-                                img.save(os.path.join(sample_path, f"temp_{base_count:05}.png"))
+                samples_stacked = torch.stack(posterior_samples, dim=0)  # [N,C,H,W]
+                post_mean = samples_stacked.mean(dim=0)                  # [C,H,W]
+                post_std  = samples_stacked.std(dim=0)                   # [C,H,W]
+                sample_0  = posterior_samples[0]                         # [C,H,W]
 
-                            base_count += 1
+                def _save(t, path):
+                    arr = (t.permute(1, 2, 0).clamp(0, 1).numpy() * 255).astype(np.uint8)
+                    Image.fromarray(arr).save(path)
 
-                    if not opt.skip_grid:
-                        all_samples.append(x_checked_image_torch)
-                    
-                    # pdb.set_trace()
-                    if not opt.skip_low_res:
+                def _save_residual(r, path):
+                    vis = r.permute(1, 2, 0).clamp(-1, 1).numpy() * 0.5 + 0.5
+                    Image.fromarray((vis * 255).astype(np.uint8)).save(path)
+
+                def _A(x):  # inpainting forward operator in [0,1] space
+                    return (mask_hw * x).clamp(0, 1)
+
+                # 1) 100 iid samples
+                samples_subdir = os.path.join(run_dir, "samples")
+                os.makedirs(samples_subdir, exist_ok=True)
+                for i, s in enumerate(posterior_samples):
+                    _save(s, os.path.join(samples_subdir, f"sample_{i:03d}.png"))
+
+                # 2) Posterior mean
+                _save(post_mean, os.path.join(run_dir, "posterior_mean.png"))
+
+                # 3) Posterior std (normalised and 5x amplified versions)
+                _save(post_std / (post_std.max() + 1e-8), os.path.join(run_dir, "posterior_std.png"))
+                _save((post_std * 5).clamp(0, 1),         os.path.join(run_dir, "posterior_std_5x.png"))
+
+                # 4) Residual: GT - one posterior sample
+                _save_residual(gt_01 - sample_0,           os.path.join(run_dir, "residual_x_sample0.png"))
+
+                # 5) Residual: y - A(one posterior sample)
+                _save_residual(y_01  - _A(sample_0),       os.path.join(run_dir, "residual_y_sample0.png"))
+
+                # 6) Residual: GT - posterior mean
+                _save_residual(gt_01 - post_mean,          os.path.join(run_dir, "residual_x_mean.png"))
+
+                # 7) Residual: y - A(posterior mean)
+                _save_residual(y_01  - _A(post_mean),      os.path.join(run_dir, "residual_y_mean.png"))
+
+                # Reference images
+                _save(gt_01,      os.path.join(run_dir, "clean.png"))
+                _save(_A(gt_01),  os.path.join(run_dir, "degraded.png"))
+
+            else:
+                # ----------------------------------------------------------
+                # General inverse problem: original single-sample behaviour.
+                # ----------------------------------------------------------
+                all_samples = list()
+                for n in trange(opt.n_iter, desc="Sampling"):
+                    for prompts in tqdm(data, desc="data"):
+                        uc = None
+                        if opt.ffhq256:
+                            shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
+                            samples_ddim, _ = sampler.sample(S=opt.ddim_steps,
+                                                            batch_size=opt.n_samples,
+                                                            shape=shape,
+                                                            verbose=False,
+                                                            eta=opt.ddim_eta,
+                                                            x_T=start_code,
+                                                            ip_mask=mask,
+                                                            measurements=y_n,
+                                                            operator=operator,
+                                                            gamma=opt.gamma,
+                                                            inpainting=opt.inpainting,
+                                                            omega=opt.omega,
+                                                            general_inverse=opt.general_inverse,
+                                                            noiser=noiser,
+                                                            ffhq256=opt.ffhq256)
+                        else:
+                            if opt.scale != 1.0:
+                                uc = model.get_learned_conditioning(batch_size * [""])
+                            if isinstance(prompts, tuple):
+                                prompts = list(prompts)
+                            c = model.get_learned_conditioning(prompts)
+                            shape = [opt.C, opt.H // opt.f, opt.W // opt.f]
+                            samples_ddim, _ = sampler.sample(S=opt.ddim_steps,
+                                                            conditioning=c,
+                                                            batch_size=opt.n_samples,
+                                                            shape=shape,
+                                                            verbose=False,
+                                                            unconditional_guidance_scale=opt.scale,
+                                                            unconditional_conditioning=uc,
+                                                            eta=opt.ddim_eta,
+                                                            x_T=start_code,
+                                                            ip_mask=mask,
+                                                            measurements=y_n,
+                                                            operator=operator,
+                                                            gamma=opt.gamma,
+                                                            inpainting=opt.inpainting,
+                                                            omega=opt.omega,
+                                                            general_inverse=opt.general_inverse,
+                                                            noiser=noiser)
+
+                        x_samples_ddim = model.decode_first_stage(samples_ddim)
+                        x_samples_ddim = torch.clamp((x_samples_ddim + 1.0) / 2.0, min=0.0, max=1.0)
+                        x_samples_ddim = x_samples_ddim.cpu().permute(0, 2, 3, 1).numpy()
+                        x_checked_image_torch = torch.from_numpy(x_samples_ddim).permute(0, 3, 1, 2)
+
                         if not opt.skip_save:
-                            inpainted_image_low_res = f.interpolate(x_checked_image_torch.type(torch.float32), size=(opt.H//2, opt.W//2))
-                            for x_sample in inpainted_image_low_res:
-                                x_sample = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
-                                img = Image.fromarray(x_sample.astype(np.uint8))
-                                # img = put_watermark(img, wm_encoder)
-                                img.save(os.path.join(sample_path, f"{base_count:05}_low_res.png"))
+                            for x_sample in x_checked_image_torch:
+                                x_sample_np = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
+                                img_out = Image.fromarray(x_sample_np.astype(np.uint8))
+                                img_out.save(os.path.join(run_dir, f"result_{base_count:05}.png"))
                                 base_count += 1
 
-                        
+                        if not opt.skip_grid:
+                            all_samples.append(x_checked_image_torch)
 
-            if not opt.skip_grid:
-                # additionally, save as grid
-                grid = torch.stack(all_samples, 0)
-                grid = rearrange(grid, 'n b c h w -> (n b) c h w')
-                grid = make_grid(grid, nrow=n_rows)
+                        if not opt.skip_low_res:
+                            if not opt.skip_save:
+                                low_res = f.interpolate(x_checked_image_torch.type(torch.float32), size=(opt.H//2, opt.W//2))
+                                for x_sample in low_res:
+                                    x_sample_np = 255. * rearrange(x_sample.cpu().numpy(), 'c h w -> h w c')
+                                    img_out = Image.fromarray(x_sample_np.astype(np.uint8))
+                                    img_out.save(os.path.join(run_dir, f"low_res_{base_count:05}.png"))
+                                    base_count += 1
 
-                # to image
-                grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
-                img = Image.fromarray(grid.astype(np.uint8))
-                # img = put_watermark(img, wm_encoder)
-                img.save(os.path.join(outpath, f'grid-{grid_count:04}.png'))
-                grid_count += 1
+                if not opt.skip_grid:
+                    grid = torch.stack(all_samples, 0)
+                    grid = rearrange(grid, 'n b c h w -> (n b) c h w')
+                    grid = make_grid(grid, nrow=n_rows)
+                    grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
+                    img_out = Image.fromarray(grid.astype(np.uint8))
+                    img_out.save(os.path.join(outpath, f'grid-{grid_count:04}.png'))
+                    grid_count += 1
 
             toc = time.time()
 

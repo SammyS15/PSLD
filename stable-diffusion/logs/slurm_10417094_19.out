@@ -1,0 +1,10 @@
+Job started:  Wed Apr 15 15:04:10 EDT 2026
+Node:         rg32203
+Array task:   19  (seed=2  scale=1.0  eta=0.5)
+Loading model from models/ldm/stable-diffusion-v1/model.ckpt
+Global Step: 470000
+LatentDiffusion: Running in eps-prediction mode
+DiffusionWrapper has 859.52 M params.
+making attention of type 'vanilla' with 512 in_channels
+Working with z of shape (1, 4, 32, 32) = 4096 dimensions.
+making attention of type 'vanilla' with 512 in_channels

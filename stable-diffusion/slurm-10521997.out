@@ -1,0 +1,17 @@
+==============================================
+ PSLD Posterior Sampling
+  save_dir:    results/psld_g0.01_w0.5_eta0.0_sc7.5_N100_apt
+  n_posterior: 100  (max 20 concurrent)
+  ddim_steps:  1000
+  scale=7.5  gamma=0.01  omega=0.5  eta=0.0
+  image:       /home/sammys15/links/scratch/latent_model_test_images/apt.png
+==============================================
+sbatch: NOTE: Your memory request of 32768.0M was likely submitted as 32.0G. Please note that Slurm interprets memory requests denominated in G as multiples of 1024M, not 1000M.
+Submitted array job:  10521999  (tasks 0-99, max 20 concurrent)
+sbatch: NOTE: Your memory request of 16384.0M was likely submitted as 16.0G. Please note that Slurm interprets memory requests denominated in G as multiples of 1024M, not 1000M.
+Submitted agg job:    10522000  (depends on 10521999)
+
+Monitor with:
+  squeue -j 10521999,10522000
+
+Results will appear in: results/psld_g0.01_w0.5_eta0.0_sc7.5_N100_apt/

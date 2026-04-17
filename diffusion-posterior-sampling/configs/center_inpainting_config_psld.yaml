@@ -1,0 +1,20 @@
+conditioning:
+  method: ps
+  params:
+    scale: 0.5
+
+data:
+  name: ffhq
+  root: ./data/samples/
+
+measurement:
+  operator:
+    name: inpainting
+  mask_opt:
+    mask_type: latino_box
+    mask_len_range: !!python/tuple [512, 513]  # matches LATINO-PRO inpainting_squared_mask formula
+    image_size: 512
+
+  noise:
+    name: gaussian
+    sigma: 0.05

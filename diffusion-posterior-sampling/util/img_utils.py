@@ -183,7 +183,7 @@ class mask_generator:
         (mask_prob_range): for the case of random masking,
         specify the probability of individual pixels being masked
         """
-        assert mask_type in ['box', 'random', 'both', 'extreme']
+        assert mask_type in ['box', 'random', 'both', 'extreme', 'center_box', 'latino_box']
         self.mask_type = mask_type
         self.mask_len_range = mask_len_range
         self.mask_prob_range = mask_prob_range
@@ -200,6 +200,35 @@ class mask_generator:
                               image_size=self.image_size,
                               margin=self.margin)
         return mask, t, tl, w, wh
+
+    def _retrieve_latino_box(self, img):
+        B, C, H, W = img.shape
+        # LATINO-PRO computes mask on native 1024x1024 with mask_size=512.
+        # Scale those coordinates to the current image size (typically 512x512).
+        native_H, native_W, size = 1024, 1024, 512
+        t_n = native_H // 2 - size // 5 - 35          # 375
+        b_n = native_H // 2 + size // 5 - 35          # 579
+        l_n = max(0, native_W // 2 - 4 * size // 5 - 2)   # 101
+        r_n = min(native_W, native_W // 2 + 4 * size // 5 + 2)  # 923
+        t = int(t_n * H / native_H)
+        b = int(b_n * H / native_H)
+        l = int(l_n * W / native_W)
+        r = int(r_n * W / native_W)
+        mask = torch.ones([B, C, H, W], device=img.device)
+        mask[..., t:b, l:r] = 0
+        return mask
+
+    def _retrieve_center_box(self, img):
+        B, C, H, W = img.shape
+        l, h = self.mask_len_range
+        l, h = int(l), int(h)
+        mask_h = np.random.randint(l, h)
+        mask_w = np.random.randint(l, h)
+        t = (H - mask_h) // 2
+        left = (W - mask_w) // 2
+        mask = torch.ones([B, C, H, W], device=img.device)
+        mask[..., t:t + mask_h, left:left + mask_w] = 0
+        return mask
 
     def _retrieve_random(self, img):
         total = self.image_size ** 2
@@ -225,6 +254,12 @@ class mask_generator:
         elif self.mask_type == 'extreme':
             mask, t, th, w, wl = self._retrieve_box(img)
             mask = 1. - mask
+            return mask
+        elif self.mask_type == 'center_box':
+            mask = self._retrieve_center_box(img)
+            return mask
+        elif self.mask_type == 'latino_box':
+            mask = self._retrieve_latino_box(img)
             return mask
 
 def unnormalize(img, s=0.95):
