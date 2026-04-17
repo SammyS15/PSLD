@@ -220,7 +220,7 @@ def main():
     parser.add_argument(
         "--ckpt",
         type=str,
-        default="/home/sammys15/links/scratch/Latent_Posterior_Sampling_Method_Comparsion/stable_diffusion_1_5_model/v1-5-pruned-emaonly.ckpt",
+        default="/lustre/fswork/projects/rech/ynx/uxl64xr/models/sd15/v1-5-pruned-emaonly.ckpt",
         help="path to checkpoint of model",
     )
     parser.add_argument(

@@ -49,7 +49,7 @@ python scripts/inverse.py \
     --inpainting=1 \
     --general_inverse=0 \
     --ddim_steps=200 \
-    --ckpt=/home/sammys15/links/scratch/Latent_Posterior_Sampling_Method_Comparsion/stable_diffusion_1_5_model/v1-5-pruned-emaonly.ckpt \
+    --ckpt=/lustre/fswork/projects/rech/ynx/uxl64xr/models/sd15/v1-5-pruned-emaonly.ckpt \
     --config=configs/stable-diffusion/v1-inference.yaml \
     --outdir=outputs/psld-100samples-apt \
     --gamma=0.01 \

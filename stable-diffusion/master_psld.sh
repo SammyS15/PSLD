@@ -21,7 +21,7 @@ SEED="${SEED:-42}"
 IMAGE_PATH="${IMAGE_PATH:-/home/sammys15/links/scratch/latent_model_test_images/apt.png}"
 TASK_CONFIG="${TASK_CONFIG:-configs/center_inpainting_config_psld.yaml}"
 MODEL_CONFIG="${MODEL_CONFIG:-configs/stable-diffusion/v1-inference.yaml}"
-CKPT="${CKPT:-/home/sammys15/links/scratch/Latent_Posterior_Sampling_Method_Comparsion/stable_diffusion_1_5_model/v1-5-pruned-emaonly.ckpt}"
+CKPT="${CKPT:-/lustre/fswork/projects/rech/ynx/uxl64xr/models/sd15/v1-5-pruned-emaonly.ckpt}"
 
 IMAGE_TAG="$(basename "${IMAGE_PATH%.*}")"
 SAVE_DIR="results/psld_g${GAMMA}_w${OMEGA}_eta${DDIM_ETA}_sc${SCALE}_N${N_POSTERIOR}_${IMAGE_TAG}"

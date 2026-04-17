@@ -40,7 +40,7 @@ def main():
     parser.add_argument("--config",      type=str,
                         default="configs/stable-diffusion/v1-inference.yaml")
     parser.add_argument("--ckpt",        type=str,
-                        default="/home/sammys15/links/scratch/Latent_Posterior_Sampling_Method_Comparsion/stable_diffusion_1_5_model/v1-5-pruned-emaonly.ckpt")
+                        default="/lustre/fswork/projects/rech/ynx/uxl64xr/models/sd15/v1-5-pruned-emaonly.ckpt")
     parser.add_argument("--ddim_steps",  type=int,   default=1000)
     parser.add_argument("--ddim_eta",    type=float, default=0.0)
     parser.add_argument("--scale",       type=float, default=7.5)
