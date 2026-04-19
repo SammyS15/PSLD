@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# SLURM / logs
+*.out
+*.err
+logs/
+
+# outputs
+outputs/
+results/
+
+# stable-diffusion internal junk
+stable-diffusion/results/
+
+# Stable diffusion specific
+stable-diffusion/logs/
+stable-diffusion/outputs/
+
+# Entire external repos (IMPORTANT)
+stable-diffusion/src/clip/
+stable-diffusion/src/taming-transformers/

@@ -1,0 +1,35 @@
+# Python cache
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+logs/
+*.out
+*.err
+
+# Results / outputs
+results/
+outputs/
+
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.out
+*.err
+
+# Experiment outputs
+results/
+outputs/
+
+# Misc
+*.egg-info/
+
+# Python cache
+__pycache__/
+*.pyc
