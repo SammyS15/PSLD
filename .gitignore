@@ -21,3 +21,8 @@ stable-diffusion/outputs/
 # Entire external repos (IMPORTANT)
 stable-diffusion/src/clip/
 stable-diffusion/src/taming-transformers/
+
+# PSLD_512
+PSLD_512/*.out
+PSLD_512/*.err
+PSLD_512/logs/
