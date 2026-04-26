@@ -1,33 +1,33 @@
 #!/bin/bash
+#SBATCH --job-name=psld_array
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=32G
-#SBATCH --time=0:30:00
-#SBATCH --account=rrg-lplevass
-#SBATCH --gres=gpu:1
-#SBATCH --job-name=psld_sample
-#SBATCH --output=./logs/slurm_%A_%a.out
-#SBATCH --error=./logs/slurm_%A_%a.err
+#SBATCH --cpus-per-task=12
+#SBATCH --time=0:40:00
+#SBATCH --gpus-per-node=1
+#SBATCH --account=ynx@v100
+#SBATCH -C v100-32g
+#SBATCH --output=./logs/psld_array_slurm_%j.out
+#SBATCH --error=./logs/psld_array_slurm_%j.err
 #SBATCH --mail-user="sammy.sharief@umontreal.ca"
-#SBATCH --mail-type=FAIL,ARRAY_TASKS
+#SBATCH --mail-type=ALL
 
-set -euo pipefail
-
-SD_DIR="$SLURM_SUBMIT_DIR"
-PSLD_ROOT="$(dirname "$SD_DIR")"
-cd "$SD_DIR"
+cd "$SLURM_SUBMIT_DIR"
 
 module purge
-module load python/3.11
 module load gcc
-module load arrow/23.0.1
-module load gcc opencv
+module load opencv
 module load ffmpeg
 
-source "$PSLD_ROOT/psld_env/bin/activate"
+export PATH="/lustre/fsn1/projects/rech/ynx/uxl64xr/conda_envs/mamba/bin:$PATH"
+eval "$(mamba shell hook --shell bash)"
+mamba activate ldm
+
+SD_DIR="$SLURM_SUBMIT_DIR"           # .../PSLD/stable-diffusion/
+PSLD_ROOT="$(dirname "$SD_DIR")"     # .../PSLD/
+cd "$SD_DIR"
 
 export PYTHONUNBUFFERED=1
-export PYTHONPATH="$SD_DIR:$PSLD_ROOT/diffusion-posterior-sampling/util:$HOME/links/scratch/resample/taming-transformers:${PYTHONPATH:-}"
+export PYTHONPATH="$PSLD_ROOT/diffusion-posterior-sampling/util:$HOME/links/scratch/resample/taming-transformers:${PYTHONPATH:-}"
 export HF_HOME="/lustre10/scratch/sammys15/hf_cache"
 export TRANSFORMERS_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
