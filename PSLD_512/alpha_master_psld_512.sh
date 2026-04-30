@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-IMAGE_DIR="/lustre/fsn1/projects/rech/ynx/uxl64xr/Images_Posterior_Method_Test_512"
+IMAGE_DIR="/lustre/fsn1/projects/rech/ynx/uxl64xr/SA_1B_Images"
 
 TASK="${TASK:-inpainting}"
 N_POSTERIOR="${N_POSTERIOR:-100}"
